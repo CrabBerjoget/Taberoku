@@ -12,6 +12,7 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
   // quantities: { [itemId]: qty }
   const [quantities, setQuantities] = useState({})
   const [saved, setSaved] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('cash')
 
   // Pre-load quantities when editing
   useEffect(() => {
@@ -63,10 +64,13 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
     if (isEditMode) {
       updateReport(editReportId, entries)
     } else {
-      saveReport(entries)
+      saveReport(entries, paymentMethod)
     }
     setSaved(true)
-    if (!isEditMode) setQuantities({})
+    if (!isEditMode) {
+      setQuantities({})
+      setPaymentMethod('cash')
+    }
   }
 
   // Group items by category
@@ -187,6 +191,36 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
               <p className="font-[Fredoka] font-bold text-warm-red text-lg">RM{totalRevenue.toFixed(2)}</p>
             </div>
           </div>
+
+          {/* Payment method toggle */}
+          {!isEditMode && entries.length > 0 && (
+            <div className="mb-3">
+              <p className="font-[Inter] text-warm-brown/50 text-xs mb-2 text-center">Payment Method</p>
+              <div className="flex rounded-xl overflow-hidden border border-warm-brown/15">
+                <button
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`flex-1 py-2.5 font-[Fredoka] font-bold text-sm transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                    paymentMethod === 'cash'
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-white/30 text-warm-brown/50 hover:bg-white/50'
+                  }`}
+                >
+                  💵 Cash
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('qr')}
+                  className={`flex-1 py-2.5 font-[Fredoka] font-bold text-sm transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                    paymentMethod === 'qr'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white/30 text-warm-brown/50 hover:bg-white/50'
+                  }`}
+                >
+                  📱 QR
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleSave}
             disabled={entries.length === 0}

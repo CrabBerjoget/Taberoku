@@ -9,6 +9,8 @@ export default function ReportHistoryPage({ onNavigate }) {
   // Calculate totals across all reports
   const grandTotalRevenue = reports.reduce((sum, r) => sum + r.totalRevenue, 0)
   const grandTotalItems = reports.reduce((sum, r) => sum + r.totalItems, 0)
+  const grandCashTotal = reports.reduce((sum, r) => sum + (r.cashTotal || 0), 0)
+  const grandQrTotal = reports.reduce((sum, r) => sum + (r.qrTotal || 0), 0)
 
   return (
     <div className="min-h-screen font-[Inter]" style={{ background: 'linear-gradient(135deg, #e8d5c4 0%, #f5e6d3 50%, #e8d5c4 100%)' }}>
@@ -45,6 +47,19 @@ export default function ReportHistoryPage({ onNavigate }) {
                 <p className="font-[Inter] text-warm-brown/40 text-[10px] uppercase tracking-wider">Revenue</p>
               </div>
             </div>
+            {/* Payment breakdown */}
+            {(grandCashTotal > 0 || grandQrTotal > 0) && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-warm-brown/10">
+                <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-green-600/10">
+                  <span className="text-xs">💵</span>
+                  <span className="font-[Fredoka] font-bold text-green-700 text-xs">RM{grandCashTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-600/10">
+                  <span className="text-xs">📱</span>
+                  <span className="font-[Fredoka] font-bold text-blue-700 text-xs">RM{grandQrTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -78,6 +93,21 @@ export default function ReportHistoryPage({ onNavigate }) {
                         {report.totalItems} items
                         {report.lastUpdated && ` · Last updated ${report.lastUpdated}`}
                       </p>
+                      {/* Payment badges */}
+                      {((report.cashTotal || 0) > 0 || (report.qrTotal || 0) > 0) && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {(report.cashTotal || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-green-600/10 font-[Fredoka] text-green-700 text-[10px] font-bold">
+                              💵 RM{(report.cashTotal || 0).toFixed(2)}
+                            </span>
+                          )}
+                          {(report.qrTotal || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-600/10 font-[Fredoka] text-blue-700 text-[10px] font-bold">
+                              📱 RM{(report.qrTotal || 0).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-[Fredoka] font-bold text-warm-red text-base">RM{report.totalRevenue.toFixed(2)}</span>

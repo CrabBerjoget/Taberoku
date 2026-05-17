@@ -67,10 +67,15 @@ export function ReportProvider({ children }) {
    * Save or merge entries into today's business-day report.
    * Multiple submissions on the same day are merged (quantities added).
    */
-  const saveReport = useCallback((entries) => {
+  const saveReport = useCallback((entries, paymentMethod = 'cash') => {
     const businessDay = getBusinessDay()
     const now = new Date()
     const existing = reports.find((r) => r.businessDay === businessDay)
+
+    // Calculate this submission's revenue
+    const submissionRevenue = entries.reduce((sum, e) => {
+      return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
+    }, 0)
 
     if (existing) {
       // Merge: add new quantities to existing entries
@@ -94,6 +99,8 @@ export function ReportProvider({ children }) {
         entries: mergedEntries,
         totalRevenue,
         totalItems,
+        cashTotal: (existing.cashTotal || 0) + (paymentMethod === 'cash' ? submissionRevenue : 0),
+        qrTotal: (existing.qrTotal || 0) + (paymentMethod === 'qr' ? submissionRevenue : 0),
         lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
       }
       delete updated._fbKey
@@ -105,9 +112,7 @@ export function ReportProvider({ children }) {
       }
     } else {
       // New day — create fresh report
-      const totalRevenue = entries.reduce((sum, e) => {
-        return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
-      }, 0)
+      const totalRevenue = submissionRevenue
       const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
 
       const report = {
@@ -119,6 +124,8 @@ export function ReportProvider({ children }) {
         entries,
         totalRevenue,
         totalItems,
+        cashTotal: paymentMethod === 'cash' ? totalRevenue : 0,
+        qrTotal: paymentMethod === 'qr' ? totalRevenue : 0,
       }
 
       // Push to Firebase

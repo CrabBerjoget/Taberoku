@@ -1,0 +1,17 @@
+{
+  "name": "Tabelok",
+  "short_name": "Tabelok",
+  "description": "Loklok & AlaMeq D'Bubur Menu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDE6C2",
+  "theme_color": "#5C3D2E",
+  "icons": [
+    {
+      "src": "/tabelokLogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

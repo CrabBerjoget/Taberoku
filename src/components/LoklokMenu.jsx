@@ -44,7 +44,7 @@ export default function LoklokMenu() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Food image */}
             <FoodImage
-              src="https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&h=400&fit=crop&crop=center"
+              src="/Image/04.png"
               alt="Delicious loklok in hot soup"
               className="h-56 sm:h-64 lg:h-full"
             />

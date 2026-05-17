@@ -46,11 +46,11 @@ export default function BuburMenu() {
 
           <p className="font-[Caveat] text-warm-gold text-xl mb-1 relative z-10">~ our signature ~</p>
           <h2 className="font-[Nunito] font-black text-5xl sm:text-6xl text-warm-brown tracking-tight leading-none relative z-10">
-            BUBUR
+            AlaMeq
           </h2>
           <h2 className="font-[Nunito] font-black text-4xl sm:text-5xl tracking-wider leading-tight -mt-1 relative z-10">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-warm-red to-warm-red-dark">
-              ALAM C
+              D'Bubur
             </span>
           </h2>
           <p className="font-[Caveat] text-warm-brown-light/60 text-xl mt-2 relative z-10">
@@ -125,17 +125,17 @@ export default function BuburMenu() {
             {/* Food images grid */}
             <div className="grid grid-cols-2 gap-3 order-1 lg:order-2">
               <FoodImage
-                src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop&crop=center"
+                src="/Image/2.png"
                 alt="Warm bubur porridge bowl"
                 className="h-36 sm:h-44"
               />
               <FoodImage
-                src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&crop=center"
+                src="/Image/3.png"
                 alt="Fresh ingredients for porridge"
                 className="h-36 sm:h-44"
               />
               <FoodImage
-                src="https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400&h=300&fit=crop&crop=center"
+                src="/Image/01.png"
                 alt="Creamy rice porridge with toppings"
                 className="col-span-2 h-36 sm:h-44"
               />

@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&family=Caveat:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-peach-50: #FFF5E6;
+  --color-peach-100: #FDE6C2;
+  --color-peach-200: #FBCF8E;
+  --color-peach-300: #F5B35A;
+  --color-peach-400: #E89630;
+  --color-warm-red: #D72638;
+  --color-warm-red-dark: #B71C2A;
+  --color-warm-brown: #5C3D2E;
+  --color-warm-brown-light: #8B5E3C;
+  --color-warm-cream: #FFF8F0;
+  --color-warm-gold: #C8952E;
+  --color-glass-white: rgba(255, 255, 255, 0.15);
+  --color-glass-border: rgba(255, 255, 255, 0.3);
+  --font-family-display: 'Fredoka', sans-serif;
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-hand: 'Caveat', cursive;
+}
+
+/* Animated gradient background */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-12px) rotate(5deg); }
+  66% { transform: translateY(6px) rotate(-3deg); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-20px) rotate(8deg) scale(1.05); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(215, 38, 56, 0.3), 0 0 40px rgba(215, 38, 56, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(215, 38, 56, 0.5), 0 0 60px rgba(215, 38, 56, 0.2); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes particleDrift {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh) translateX(50px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes blobMorph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 50% 70% 60%; }
+  75% { border-radius: 60% 30% 50% 40% / 60% 70% 40% 30%; }
+}
+
+@keyframes revealLine {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Utility animation classes */
+.animate-gradient { animation: gradientShift 8s ease infinite; background-size: 200% 200%; }
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+.animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in { animation: fadeIn 0.6s ease both; }
+.animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+.animate-spin-slow { animation: spinSlow 20s linear infinite; }
+.animate-wiggle { animation: wiggle 2s ease-in-out infinite; }
+.animate-blob { animation: blobMorph 12s ease-in-out infinite; }
+.animate-particle { animation: particleDrift linear infinite; }
+.animate-reveal-line { animation: revealLine 1s ease-out both; }
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #FDE6C2; }
+::-webkit-scrollbar-thumb { background: #C8952E; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8B5E3C; }
+
+/* Smooth scrolling */
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; }

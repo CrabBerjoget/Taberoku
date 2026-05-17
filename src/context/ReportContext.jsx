@@ -1,17 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { db } from '../firebase.js'
+import { ref, onValue, set, push, remove, update } from 'firebase/database'
 
 const STORAGE_KEY = 'tabelok_daily_reports'
+const DB_PATH = 'reports'
 
 const ReportContext = createContext(null)
-
-function loadReports() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
 
 /**
  * Get the "business day" key for a given date.
@@ -31,11 +25,43 @@ function getBusinessDayLabel(dateStr) {
 }
 
 export function ReportProvider({ children }) {
-  const [reports, setReports] = useState(loadReports)
+  const [reports, setReports] = useState([])
+  const [loaded, setLoaded] = useState(false)
 
+  // Listen for real-time updates from Firebase
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports))
-  }, [reports])
+    const dbRef = ref(db, DB_PATH)
+    const unsubscribe = onValue(dbRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        // Convert Firebase object to sorted array
+        const arr = Object.keys(data).map((key) => ({ ...data[key], _fbKey: key }))
+        arr.sort((a, b) => (b.businessDay || '').localeCompare(a.businessDay || ''))
+        setReports(arr)
+      } else {
+        setReports([])
+      }
+      setLoaded(true)
+    }, (error) => {
+      console.warn('Firebase read failed, falling back to localStorage', error)
+      // Fallback to localStorage
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        setReports(stored ? JSON.parse(stored) : [])
+      } catch {
+        setReports([])
+      }
+      setLoaded(true)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // Also cache to localStorage as backup
+  useEffect(() => {
+    if (loaded && reports.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reports))
+    }
+  }, [reports, loaded])
 
   /**
    * Save or merge entries into today's business-day report.
@@ -44,91 +70,104 @@ export function ReportProvider({ children }) {
   const saveReport = useCallback((entries) => {
     const businessDay = getBusinessDay()
     const now = new Date()
+    const existing = reports.find((r) => r.businessDay === businessDay)
 
-    setReports((prev) => {
-      const existing = prev.find((r) => r.businessDay === businessDay)
-
-      if (existing) {
-        // Merge: add new quantities to existing entries
-        const mergedEntries = [...existing.entries]
-        entries.forEach((newEntry) => {
-          const idx = mergedEntries.findIndex((e) => e.id === newEntry.id)
-          if (idx >= 0) {
-            mergedEntries[idx] = { ...mergedEntries[idx], qty: mergedEntries[idx].qty + newEntry.qty }
-          } else {
-            mergedEntries.push({ ...newEntry })
-          }
-        })
-
-        const totalRevenue = mergedEntries.reduce((sum, e) => {
-          return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
-        }, 0)
-        const totalItems = mergedEntries.reduce((sum, e) => sum + e.qty, 0)
-
-        const updated = {
-          ...existing,
-          entries: mergedEntries,
-          totalRevenue,
-          totalItems,
-          lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
+    if (existing) {
+      // Merge: add new quantities to existing entries
+      const mergedEntries = [...existing.entries]
+      entries.forEach((newEntry) => {
+        const idx = mergedEntries.findIndex((e) => e.id === newEntry.id)
+        if (idx >= 0) {
+          mergedEntries[idx] = { ...mergedEntries[idx], qty: mergedEntries[idx].qty + newEntry.qty }
+        } else {
+          mergedEntries.push({ ...newEntry })
         }
+      })
 
-        return prev.map((r) => (r.businessDay === businessDay ? updated : r))
-      } else {
-        // New day — create fresh report
-        const totalRevenue = entries.reduce((sum, e) => {
-          return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
-        }, 0)
-        const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
+      const totalRevenue = mergedEntries.reduce((sum, e) => {
+        return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
+      }, 0)
+      const totalItems = mergedEntries.reduce((sum, e) => sum + e.qty, 0)
 
-        const report = {
-          id: Date.now(),
-          businessDay,
-          date: getBusinessDayLabel(businessDay),
-          time: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
-          lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
-          entries,
-          totalRevenue,
-          totalItems,
-        }
-        return [report, ...prev]
+      const updated = {
+        ...existing,
+        entries: mergedEntries,
+        totalRevenue,
+        totalItems,
+        lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
       }
-    })
-  }, [])
+      delete updated._fbKey
+
+      // Update in Firebase
+      const fbKey = existing._fbKey
+      if (fbKey) {
+        set(ref(db, `${DB_PATH}/${fbKey}`), updated)
+      }
+    } else {
+      // New day — create fresh report
+      const totalRevenue = entries.reduce((sum, e) => {
+        return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
+      }, 0)
+      const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
+
+      const report = {
+        id: Date.now(),
+        businessDay,
+        date: getBusinessDayLabel(businessDay),
+        time: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
+        lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
+        entries,
+        totalRevenue,
+        totalItems,
+      }
+
+      // Push to Firebase
+      push(ref(db, DB_PATH), report)
+    }
+  }, [reports])
 
   /**
    * Directly overwrite a report's entries (for Edit mode).
    */
   const updateReport = useCallback((reportId, entries) => {
-    setReports((prev) =>
-      prev.map((r) => {
-        if (r.id !== reportId) return r
-        const totalRevenue = entries.reduce((sum, e) => {
-          return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
-        }, 0)
-        const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
-        const now = new Date()
-        return {
-          ...r,
-          entries,
-          totalRevenue,
-          totalItems,
-          lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
-        }
-      })
-    )
-  }, [])
+    const report = reports.find((r) => r.id === reportId)
+    if (!report) return
+
+    const totalRevenue = entries.reduce((sum, e) => {
+      return sum + (parseFloat(e.price.replace(/[^0-9.]/g, '')) || 0) * e.qty
+    }, 0)
+    const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
+    const now = new Date()
+
+    const updated = {
+      ...report,
+      entries,
+      totalRevenue,
+      totalItems,
+      lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
+    }
+    delete updated._fbKey
+
+    const fbKey = report._fbKey
+    if (fbKey) {
+      set(ref(db, `${DB_PATH}/${fbKey}`), updated)
+    }
+  }, [reports])
 
   const getReport = useCallback((id) => {
     return reports.find((r) => r.id === id) || null
   }, [reports])
 
   const deleteReport = useCallback((id) => {
-    setReports((prev) => prev.filter((r) => r.id !== id))
-  }, [])
+    const report = reports.find((r) => r.id === id)
+    if (report && report._fbKey) {
+      remove(ref(db, `${DB_PATH}/${report._fbKey}`))
+    }
+  }, [reports])
 
   const clearAllReports = useCallback(() => {
-    setReports([])
+    set(ref(db, DB_PATH), null)
+    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   return (

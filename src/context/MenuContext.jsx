@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { db } from '../firebase.js'
+import { ref, onValue, set } from 'firebase/database'
 
 const STORAGE_KEY = 'tabelok_menu_data'
+const DB_PATH = 'menuData'
 const ADMIN_PASSWORD = 'tabelok123'
 
 const defaultMenuData = {
@@ -27,25 +30,6 @@ const defaultMenuData = {
   ],
 }
 
-function loadMenuData() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      // Merge with defaults to pick up any new items added in code
-      return {
-        loklokSingles: mergeItems(defaultMenuData.loklokSingles, parsed.loklokSingles),
-        loklokCombos: mergeItems(defaultMenuData.loklokCombos, parsed.loklokCombos),
-        buburItems: mergeItems(defaultMenuData.buburItems, parsed.buburItems),
-        buburPromos: mergeItems(defaultMenuData.buburPromos, parsed.buburPromos),
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to load menu data from localStorage', e)
-  }
-  return structuredClone(defaultMenuData)
-}
-
 function mergeItems(defaults, stored) {
   if (!stored) return defaults
   return defaults.map((def) => {
@@ -54,14 +38,49 @@ function mergeItems(defaults, stored) {
   })
 }
 
+function mergeMenuData(stored) {
+  return {
+    loklokSingles: mergeItems(defaultMenuData.loklokSingles, stored.loklokSingles),
+    loklokCombos: mergeItems(defaultMenuData.loklokCombos, stored.loklokCombos),
+    buburItems: mergeItems(defaultMenuData.buburItems, stored.buburItems),
+    buburPromos: mergeItems(defaultMenuData.buburPromos, stored.buburPromos),
+  }
+}
+
 const MenuContext = createContext(null)
 
 export function MenuProvider({ children }) {
-  const [menuData, setMenuData] = useState(loadMenuData)
+  const [menuData, setMenuData] = useState(() => {
+    // Load from localStorage as initial state while Firebase loads
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) return mergeMenuData(JSON.parse(stored))
+    } catch (e) {
+      console.warn('Failed to load menu data from localStorage', e)
+    }
+    return structuredClone(defaultMenuData)
+  })
   const [isAdmin, setIsAdmin] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [fbReady, setFbReady] = useState(false)
 
-  // Persist to localStorage on change
+  // Listen for real-time menu updates from Firebase
+  useEffect(() => {
+    const dbRef = ref(db, DB_PATH)
+    const unsubscribe = onValue(dbRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        setMenuData(mergeMenuData(data))
+      }
+      setFbReady(true)
+    }, (error) => {
+      console.warn('Firebase menu read failed', error)
+      setFbReady(true)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // Cache to localStorage as backup
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData))
   }, [menuData])
@@ -80,16 +99,23 @@ export function MenuProvider({ children }) {
   }
 
   function updateItem(category, id, updates) {
-    setMenuData((prev) => ({
-      ...prev,
-      [category]: prev[category].map((item) =>
-        item.id === id ? { ...item, ...updates } : item
-      ),
-    }))
+    setMenuData((prev) => {
+      const updated = {
+        ...prev,
+        [category]: prev[category].map((item) =>
+          item.id === id ? { ...item, ...updates } : item
+        ),
+      }
+      // Sync to Firebase
+      set(ref(db, DB_PATH), updated)
+      return updated
+    })
   }
 
   function resetToDefaults() {
-    setMenuData(structuredClone(defaultMenuData))
+    const defaults = structuredClone(defaultMenuData)
+    setMenuData(defaults)
+    set(ref(db, DB_PATH), defaults)
   }
 
   return (

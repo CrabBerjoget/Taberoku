@@ -136,7 +136,7 @@ export function ReportProvider({ children }) {
   /**
    * Directly overwrite a report's entries (for Edit mode).
    */
-  const updateReport = useCallback((reportId, entries) => {
+  const updateReport = useCallback((reportId, entries, cashTotal = 0, qrTotal = 0) => {
     const report = reports.find((r) => r.id === reportId)
     if (!report) return
 
@@ -151,6 +151,8 @@ export function ReportProvider({ children }) {
       entries,
       totalRevenue,
       totalItems,
+      cashTotal,
+      qrTotal,
       lastUpdated: now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }),
     }
     delete updated._fbKey

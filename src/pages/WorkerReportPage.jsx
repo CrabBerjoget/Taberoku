@@ -13,6 +13,8 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
   const [quantities, setQuantities] = useState({})
   const [saved, setSaved] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [editCash, setEditCash] = useState('')
+  const [editQr, setEditQr] = useState('')
 
   // Pre-load quantities when editing
   useEffect(() => {
@@ -20,6 +22,8 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
       const loaded = {}
       editingReport.entries.forEach((e) => { loaded[e.id] = e.qty })
       setQuantities(loaded)
+      setEditCash((editingReport.cashTotal || 0).toFixed(2))
+      setEditQr((editingReport.qrTotal || 0).toFixed(2))
     }
   }, [editReportId])
 
@@ -62,7 +66,7 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
   function handleSave() {
     if (entries.length === 0) return
     if (isEditMode) {
-      updateReport(editReportId, entries)
+      updateReport(editReportId, entries, parseFloat(editCash) || 0, parseFloat(editQr) || 0)
     } else {
       saveReport(entries, paymentMethod)
     }
@@ -192,7 +196,7 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
             </div>
           </div>
 
-          {/* Payment method toggle */}
+          {/* Payment method toggle — new report */}
           {!isEditMode && entries.length > 0 && (
             <div className="mb-3">
               <p className="font-[Inter] text-warm-brown/50 text-xs mb-2 text-center">Payment Method</p>
@@ -217,6 +221,45 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
                 >
                   📱 QR
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Payment edit — edit mode */}
+          {isEditMode && (
+            <div className="mb-3">
+              <p className="font-[Inter] text-warm-brown/50 text-xs mb-2 text-center">Payment Breakdown</p>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-green-600/10 border border-green-600/20">
+                    <span className="text-sm">💵</span>
+                    <span className="font-[Fredoka] font-bold text-green-700 text-xs">RM</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editCash}
+                      onChange={(e) => { setEditCash(e.target.value); setSaved(false) }}
+                      className="w-full bg-transparent font-[Fredoka] font-bold text-green-700 text-sm outline-none"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600/10 border border-blue-600/20">
+                    <span className="text-sm">📱</span>
+                    <span className="font-[Fredoka] font-bold text-blue-700 text-xs">RM</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editQr}
+                      onChange={(e) => { setEditQr(e.target.value); setSaved(false) }}
+                      className="w-full bg-transparent font-[Fredoka] font-bold text-blue-700 text-sm outline-none"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

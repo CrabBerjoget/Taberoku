@@ -60,12 +60,12 @@ export default function LoklokMenu() {
                 </h3>
                 {regularItems.map((item, i) => (
                   <div key={item.id} className={isVisible ? 'animate-slide-up' : 'opacity-0'} style={{ animationDelay: `${300 + i * 100}ms` }}>
-                    <MenuItem id={item.id} name={item.name} price={item.price} index={i} soldOut={item.soldOut} />
+                    <MenuItem id={item.id} name={item.name} price={item.price} index={i} soldOut={item.soldOut} item={item} />
                   </div>
                 ))}
 
                 {/* Soup toggle */}
-                {soupItem && !soupItem.soldOut && (
+                {soupItem && !soupItem.soldOut && !soupItem.comingSoon && (
                   <div className={`${isVisible ? 'animate-slide-up' : 'opacity-0'}`} style={{ animationDelay: `${300 + regularItems.length * 100}ms` }}>
                     <div className={`
                       flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-300
@@ -78,11 +78,21 @@ export default function LoklokMenu() {
                         <span className="text-lg">🍲</span>
                         <div>
                           <span className="font-[Inter] text-sm font-medium text-warm-brown">{soupItem.name}</span>
-                          <span className="font-[Fredoka] font-bold text-warm-red text-sm ml-2">{soupItem.price}</span>
+                          {menuData.closingSales && soupItem.closingPrice && soupItem.closingPrice !== soupItem.price ? (
+                            <span className="ml-2 font-[Fredoka] text-sm font-bold">
+                              <span className="line-through text-warm-brown/40 mr-1 font-normal text-xs">{soupItem.price}</span>
+                              <span className="text-warm-red">🌙 {soupItem.closingPrice}</span>
+                            </span>
+                          ) : (
+                            <span className="font-[Fredoka] font-bold text-warm-red text-sm ml-2">{soupItem.price}</span>
+                          )}
                         </div>
                       </div>
                       <button
-                        onClick={() => soupInCart ? removeItem('soup') : addItem('soup', soupItem.name, soupItem.price)}
+                        onClick={() => {
+                          const activePrice = (menuData.closingSales && soupItem.closingPrice) ? soupItem.closingPrice : soupItem.price
+                          soupInCart ? removeItem('soup') : addItem('soup', soupItem.name, activePrice)
+                        }}
                         className={`
                           relative w-12 h-6 rounded-full transition-all duration-300 shrink-0
                           ${soupInCart ? 'bg-warm-red' : 'bg-warm-brown/20'}
@@ -132,6 +142,7 @@ export default function LoklokMenu() {
                       tooltip={item.tooltip}
                       soldOut={item.soldOut}
                       onComboAdd={() => setPickerCombo(item)}
+                      item={item}
                     />
                   </div>
                 ))}

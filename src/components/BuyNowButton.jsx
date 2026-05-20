@@ -15,8 +15,10 @@ export default function BuyNowButton() {
   const soupItem = menuData.loklokSingles.find((i) => i.id === 'soup')
   const soupSoldOut = soupItem?.soldOut ?? true
 
+  const closingSalesActive = menuData?.closingSales || false
+
   function buildMessage() {
-    let msg = '🍢 *Tabelok Order*\n\n'
+    let msg = closingSalesActive ? '🍢 *Tabelok Order* (Late Night Sale 🌙)\n\n' : '🍢 *Tabelok Order*\n\n'
     cartItems.forEach((item) => {
       msg += `• ${item.name} × ${item.qty}  (${item.price} each)\n`
       if (item.combos && item.combos.length > 0) {
@@ -41,9 +43,16 @@ export default function BuyNowButton() {
     item.id.startsWith('combo')
   )
 
+  // Check if any loklok single item (non-soup) is in the cart
+  const loklokSingleIds = menuData.loklokSingles.filter((i) => i.id !== 'soup').map((i) => i.id)
+  const hasLoklokItem = cartItems.some((item) =>
+    loklokSingleIds.includes(item.id)
+  )
+
   function handleClick() {
-    // Skip soup prompt if: soup already added, soup sold out, any combo in cart, or total >= RM20 (free soup)
-    if (!hasSoup && !soupSoldOut && !hasCombo && totalPrice < 20) {
+    // Skip soup prompt if: soup already added, soup sold out, any combo in cart,
+    // total >= RM20 (free soup), or cart has NO loklok items (bubur-only order)
+    if (!hasSoup && !soupSoldOut && !hasCombo && totalPrice < 20 && hasLoklokItem) {
       setShowSoupPrompt(true)
     } else {
       openWhatsApp()
@@ -52,9 +61,14 @@ export default function BuyNowButton() {
 
   function handleAddSoup() {
     if (soupItem) {
-      addItem('soup', soupItem.name, soupItem.price)
+      const activeSoupPrice = (closingSalesActive && soupItem.closingPrice) ? soupItem.closingPrice : soupItem.price
+      addItem('soup', soupItem.name, activeSoupPrice)
+      setTimeout(() => {
+        openWhatsApp()
+      }, 50)
+    } else {
+      setShowSoupPrompt(false)
     }
-    setShowSoupPrompt(false)
   }
 
   return (

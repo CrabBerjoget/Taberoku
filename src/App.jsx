@@ -3,11 +3,13 @@ import Header from './components/Header.jsx'
 import LoklokMenu from './components/LoklokMenu.jsx'
 import BuburMenu from './components/BuburMenu.jsx'
 import Footer from './components/Footer.jsx'
+import LocationSection from './components/LocationSection.jsx'
 import FloatingParticles from './components/FloatingParticles.jsx'
 import AdminModal from './components/AdminModal.jsx'
 import BuyNowButton from './components/BuyNowButton.jsx'
 import WorkerReportPage from './pages/WorkerReportPage.jsx'
 import ReportHistoryPage from './pages/ReportHistoryPage.jsx'
+import AdminPage from './pages/AdminPage.jsx'
 import { MenuProvider, useMenu } from './context/MenuContext.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { ReportProvider } from './context/ReportContext.jsx'
@@ -31,7 +33,8 @@ function useHashRoute() {
 }
 
 function MenuPage({ onNavigate }) {
-  const { showAdmin, setShowAdmin } = useMenu()
+  const { showAdmin, setShowAdmin, menuData } = useMenu()
+  const closingSalesActive = menuData?.closingSales || false
 
   return (
     <div
@@ -66,8 +69,25 @@ function MenuPage({ onNavigate }) {
       {/* Main content */}
       <div className="relative z-10 max-w-2xl mx-auto">
         <Header />
+
+        {closingSalesActive && (
+          <div className="mx-4 mb-4 p-4 rounded-3xl bg-gradient-to-r from-warm-red/10 via-peach-200/40 to-warm-gold/10 border border-warm-red/20 shadow-lg shadow-warm-red/5 flex items-center justify-between gap-3 animate-pulse-slow">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl animate-spin-slow">🌙</span>
+              <div>
+                <p className="font-[Fredoka] font-bold text-warm-brown text-sm">Late Night Sale Active! 🏮</p>
+                <p className="font-[Caveat] text-warm-brown-light/80 text-sm">Special discounted pricing applied automatically!</p>
+              </div>
+            </div>
+            <span className="text-xs bg-warm-red text-white font-[Fredoka] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold shrink-0 shadow-md">
+              Sale ON
+            </span>
+          </div>
+        )}
+
         <LoklokMenu />
         <BuburMenu />
+        <LocationSection />
         <Footer />
       </div>
 
@@ -91,6 +111,8 @@ function AppContent() {
   }
 
   switch (route) {
+    case 'admin':
+      return <AdminPage onNavigate={navigate} />
     case 'report':
       return <WorkerReportPage onNavigate={navigate} />
     case 'reports':

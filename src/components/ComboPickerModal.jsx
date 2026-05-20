@@ -5,8 +5,12 @@ import { useCart } from '../context/CartContext.jsx'
 export default function ComboPickerModal({ combo, onClose }) {
   const { menuData } = useMenu()
   const { addCombo } = useCart()
-  const availableItems = menuData.loklokSingles.filter((item) => !item.soldOut)
+  const availableItems = menuData.loklokSingles.filter((item) => !item.soldOut && !item.comingSoon)
   const maxPicks = combo.maxPicks || 6
+
+  const closingSalesActive = menuData?.closingSales || false
+  const hasPromoPrice = closingSalesActive && combo.closingPrice && combo.closingPrice.trim() !== ''
+  const activePrice = hasPromoPrice ? combo.closingPrice : combo.price
 
   // picks: { [itemId]: qty }
   const [picks, setPicks] = useState({})
@@ -42,7 +46,7 @@ export default function ComboPickerModal({ combo, onClose }) {
     if (combo.includesBubur) {
       subItems.push('Bubur Ayam')
     }
-    addCombo(combo.id, combo.name, combo.price, subItems)
+    addCombo(combo.id, combo.name, activePrice, subItems)
     onClose()
   }
 
@@ -70,7 +74,14 @@ export default function ComboPickerModal({ combo, onClose }) {
             🍢
           </div>
           <h3 className="font-[Nunito] font-black text-lg text-warm-brown">{combo.name}</h3>
-          <p className="font-[Fredoka] text-warm-red font-bold text-sm">{combo.price}</p>
+          {hasPromoPrice ? (
+            <p className="font-[Fredoka] font-bold text-sm">
+              <span className="line-through text-warm-brown/40 mr-1.5 font-normal text-xs">{combo.price}</span>
+              <span className="text-warm-red">🌙 {activePrice}</span>
+            </p>
+          ) : (
+            <p className="font-[Fredoka] text-warm-red font-bold text-sm">{combo.price}</p>
+          )}
           {combo.includesBubur && (
             <p className="font-[Caveat] text-warm-brown-light/60 text-sm mt-1">
               Includes Bubur Ayam 🍚

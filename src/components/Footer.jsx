@@ -4,7 +4,15 @@ import { useMenu } from '../context/MenuContext.jsx'
 
 export default function Footer() {
   const [ref, isVisible] = useScrollReveal(0.2)
-  const { setShowAdmin } = useMenu()
+  const { isAdmin, setShowAdmin } = useMenu()
+
+  function handleAdminClick() {
+    if (isAdmin) {
+      window.location.hash = '#/admin'
+    } else {
+      setShowAdmin(true)
+    }
+  }
 
   return (
     <footer ref={ref} className={`text-center py-10 px-4 mt-4 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -17,7 +25,7 @@ export default function Footer() {
 
       {/* Clickable logo mark — opens admin */}
       <button
-        onClick={() => setShowAdmin(true)}
+        onClick={handleAdminClick}
         className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full px-5 py-2 mb-3 hover:bg-white/35 hover:border-warm-gold/40 hover:shadow-md hover:shadow-peach-300/20 active:scale-95 transition-all duration-300 cursor-pointer group"
       >
         <span className="font-[Caveat] text-warm-gold text-lg group-hover:text-warm-gold transition-colors">タベロク</span>

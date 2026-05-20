@@ -58,6 +58,11 @@ export default function Header() {
             blur-3xl transition-all duration-700
           " />
         </div>
+
+        {/* Subtitle / Tagline */}
+        <h2 className="font-[Fredoka] font-bold text-sm sm:text-base text-warm-brown mt-2.5 tracking-wide">
+          Tabelok - Pickup System
+        </h2>
       </div>
 
       {/* Floating emoji accents */}

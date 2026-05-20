@@ -12,7 +12,7 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
   // quantities: { [itemId]: qty }
   const [quantities, setQuantities] = useState({})
   const [saved, setSaved] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentMethod, setPaymentMethod] = useState(null)
   const [editCash, setEditCash] = useState('')
   const [editQr, setEditQr] = useState('')
 
@@ -53,9 +53,15 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
     setSaved(false)
   }
 
+  // Use closingPrice when Late Night Sales mode is active
+  const getActivePrice = (item) => {
+    if (menuData.closingSales && item.closingPrice) return item.closingPrice
+    return item.price
+  }
+
   const entries = allItems
     .filter((item) => getQty(item.id) > 0)
-    .map((item) => ({ id: item.id, name: item.name, price: item.price, qty: getQty(item.id) }))
+    .map((item) => ({ id: item.id, name: item.name, price: getActivePrice(item), qty: getQty(item.id) }))
 
   const totalItems = entries.reduce((sum, e) => sum + e.qty, 0)
   const totalRevenue = entries.reduce((sum, e) => {
@@ -73,7 +79,7 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
     setSaved(true)
     if (!isEditMode) {
       setQuantities({})
-      setPaymentMethod('cash')
+      setPaymentMethod(null)
     }
   }
 
@@ -128,6 +134,14 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
           )}
         </div>
 
+        {/* Late Night banner */}
+        {menuData.closingSales && (
+          <div className="p-3 rounded-xl bg-warm-red/10 border border-warm-red/20 text-center animate-slide-up">
+            <p className="font-[Fredoka] text-warm-red text-sm font-bold">🌙 Late Night Sales Active</p>
+            <p className="font-[Inter] text-warm-brown/50 text-[10px] mt-0.5">Prices auto-adjusted to closing prices</p>
+          </div>
+        )}
+
         {/* Saved banner */}
         {saved && (
           <div className="p-3 rounded-xl bg-green-100/80 border border-green-300/40 text-center animate-slide-up">
@@ -154,8 +168,12 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${qty > 0 ? 'bg-warm-red' : 'bg-warm-gold/40'}`} />
-                      <span className="font-[Inter] text-warm-brown text-sm font-medium truncate">{item.name}</span>
-                      <span className="font-[Fredoka] text-warm-brown/50 text-xs shrink-0">{item.price}</span>
+                      <span className="font-[Inter] text-warm-brown text-sm font-medium whitespace-normal break-words">{item.name}</span>
+                      <span className="font-[Fredoka] text-warm-brown/50 text-xs shrink-0">
+                        {menuData.closingSales && item.closingPrice ? (
+                          <><span className="line-through text-warm-brown/30 mr-1">{item.price}</span><span className="text-warm-red">🌙 {item.closingPrice}</span></>
+                        ) : item.price}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       <button
@@ -266,17 +284,19 @@ export default function WorkerReportPage({ onNavigate, editReportId = null }) {
 
           <button
             onClick={handleSave}
-            disabled={entries.length === 0}
-            className={`w-full px-4 py-3 rounded-xl font-[Fredoka] font-bold text-sm tracking-wide transition-all duration-200 ${entries.length > 0
+            disabled={entries.length === 0 || (!isEditMode && !paymentMethod)}
+            className={`w-full px-4 py-3 rounded-xl font-[Fredoka] font-bold text-sm tracking-wide transition-all duration-200 ${entries.length > 0 && (isEditMode || paymentMethod)
               ? 'bg-warm-brown text-white hover:bg-warm-brown-light active:scale-95'
               : 'bg-warm-brown/10 text-warm-brown/25 cursor-not-allowed'
               }`}
           >
             {entries.length === 0
               ? 'Add items above to save report'
-              : isEditMode
-                ? `💾 Update Report (${entries.length} items)`
-                : `💾 Save Daily Report (${entries.length} items)`}
+              : !isEditMode && !paymentMethod
+                ? 'Select a payment method'
+                : isEditMode
+                  ? `💾 Update Report (${entries.length} items)`
+                  : `💾 Save Daily Report (${entries.length} items)`}
           </button>
         </div>
 

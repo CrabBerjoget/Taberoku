@@ -12,8 +12,6 @@ export default function BuburMenu() {
   const { addItem, removeItem, getQty } = useCart()
 
   const buburItems = menuData.buburItems
-  const promoItem = menuData.buburPromos?.[0]
-  const promoQty = promoItem ? getQty(promoItem.id) : 0
 
   return (
     <section id="bubur-menu" ref={sectionRef}>
@@ -71,43 +69,83 @@ export default function BuburMenu() {
 
               {buburItems.map((item, i) => (
                 <div key={item.id} className={isVisible ? 'animate-slide-up' : 'opacity-0'} style={{ animationDelay: `${400 + i * 120}ms` }}>
-                  <MenuItem id={item.id} name={item.name} price={item.price} index={i} soldOut={item.soldOut} />
+                  <MenuItem id={item.id} name={item.name} price={item.price} index={i} soldOut={item.soldOut} item={item} />
                 </div>
               ))}
 
-              {/* 3x Kosong promo */}
-              {promoItem && !promoItem.soldOut && (
-                <div className={`mt-4 p-4 rounded-2xl glass-card border-warm-gold/30 relative overflow-hidden transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${promoQty > 0 ? 'ring-2 ring-warm-gold/30' : ''}`} style={{ transitionDelay: '700ms' }}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center justify-center w-10 h-10 rounded-full bg-warm-gold/15 text-xl">🍚</span>
-                      <div>
-                        <p className="font-[Fredoka] font-bold text-warm-brown text-sm">{promoItem.name}</p>
-                        <p className="font-[Caveat] text-warm-brown-light/60 text-sm">Save RM0.50!</p>
+              {/* Promo items */}
+              {(menuData.buburPromos || []).map((item, idx) => {
+                const qty = getQty(item.id)
+                if (item.soldOut) return null
+
+                const isComingSoon = item.comingSoon || false
+                const closingSalesActive = menuData?.closingSales || false
+                const hasPromoPrice = closingSalesActive && item.closingPrice && item.closingPrice.trim() !== ''
+                const displayPrice = hasPromoPrice ? item.closingPrice : item.price
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`mt-4 p-4 rounded-2xl glass-card relative overflow-hidden transition-all duration-700
+                      ${isComingSoon ? 'border-warm-gold/20 opacity-80 bg-warm-gold/5' : 'border-warm-gold/30'}
+                      ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}
+                      ${qty > 0 && !isComingSoon ? 'ring-2 ring-warm-gold/30' : ''}`}
+                    style={{ transitionDelay: `${700 + idx * 100}ms` }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-warm-gold/15 text-xl">🍚</span>
+                        <div>
+                          <p className="font-[Fredoka] font-bold text-warm-brown text-sm flex items-center gap-1.5">
+                            {item.name}
+                            {isComingSoon && (
+                              <span className="text-[8px] font-[Fredoka] text-white bg-warm-gold px-1.5 py-0.5 rounded-full uppercase tracking-wider font-bold shrink-0 shadow-sm">
+                                Coming Soon
+                              </span>
+                            )}
+                          </p>
+                          <p className="font-[Caveat] text-warm-brown-light/60 text-sm">Promo Offer!</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasPromoPrice ? (
+                          <div className="flex flex-col items-end mr-1">
+                            <span className="text-[10px] line-through text-warm-brown/40 font-normal leading-none mb-0.5">{item.price}</span>
+                            <span className="font-[Fredoka] font-bold text-warm-red text-base leading-none">
+                              🌙 {displayPrice}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className={`font-[Fredoka] font-bold text-lg mr-1 ${isComingSoon ? 'text-warm-brown/30 line-through' : 'text-warm-red'}`}>
+                            {item.price}
+                          </span>
+                        )}
+
+                        {!isComingSoon && (
+                          <>
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              disabled={qty === 0}
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-all select-none ${qty > 0 ? 'bg-warm-red/15 text-warm-red hover:bg-warm-red/25 active:scale-90' : 'bg-warm-brown/5 text-warm-brown/15'}`}
+                            >
+                              −
+                            </button>
+                            <span className={`w-5 text-center font-[Fredoka] font-bold text-sm ${qty > 0 ? 'text-warm-brown' : 'text-warm-brown/20'}`}>
+                              {qty}
+                            </span>
+                            <button
+                              onClick={() => addItem(item.id, item.name, displayPrice)}
+                              className="w-7 h-7 rounded-full bg-warm-gold/20 text-warm-gold hover:bg-warm-gold/35 active:scale-90 flex items-center justify-center text-sm font-bold transition-all select-none"
+                            >
+                              +
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-[Fredoka] font-bold text-warm-red text-lg">{promoItem.price}</span>
-                      <button
-                        onClick={() => removeItem(promoItem.id)}
-                        disabled={promoQty === 0}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-all select-none ${promoQty > 0 ? 'bg-warm-red/15 text-warm-red hover:bg-warm-red/25 active:scale-90' : 'bg-warm-brown/5 text-warm-brown/15'}`}
-                      >
-                        −
-                      </button>
-                      <span className={`w-5 text-center font-[Fredoka] font-bold text-sm ${promoQty > 0 ? 'text-warm-brown' : 'text-warm-brown/20'}`}>
-                        {promoQty}
-                      </span>
-                      <button
-                        onClick={() => addItem(promoItem.id, promoItem.name, promoItem.price)}
-                        className="w-7 h-7 rounded-full bg-warm-gold/20 text-warm-gold hover:bg-warm-gold/35 active:scale-90 flex items-center justify-center text-sm font-bold transition-all select-none"
-                      >
-                        +
-                      </button>
-                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })}
 
               {/* Highlight callout card */}
               <div className={`mt-3 p-4 rounded-2xl bg-gradient-to-br from-warm-red/10 via-peach-200/40 to-warm-gold/10 border border-warm-red/15 relative overflow-hidden transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: '800ms' }}>
